@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>April 7 — Growth Standup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #fafaf8;
+      --fg: #1a1a1a;
+      --dim: #999;
+      --accent: #0055ff;
+      --surface: #f5f5f3;
+      --border: #e5e5e0;
+      --radius: 8px;
+    }
+
+    html { scroll-behavior: smooth; scroll-snap-type: y mandatory; }
+
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-weight: 300;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* -- Progress -- */
+    .progress {
+      position: fixed; top: 0; left: 0; height: 2px;
+      background: var(--accent); z-index: 100;
+      transition: width 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* -- Nav dots -- */
+    .nav-dots {
+      position: fixed; right: 1.5rem; top: 50%;
+      transform: translateY(-50%); z-index: 100;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .nav-dots .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--border); cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-dots .dot.active {
+      background: var(--fg);
+      transform: scale(1.4);
+    }
+
+    /* -- Slides -- */
+    .slide {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 4rem 2rem;
+      scroll-snap-align: start;
+    }
+    .slide-inner { max-width: 680px; width: 100%; }
+
+    /* -- Type -- */
+    .mono {
+      font-family: 'DM Mono', monospace;
+      font-weight: 400;
+    }
+    .label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--dim);
+    }
+    h1 {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      margin-bottom: 1.5rem;
+    }
+    .dim { color: var(--dim); }
+    .accent { color: var(--accent); }
+
+    /* -- Card (shadcn-style) -- */
+    .card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+    }
+
+    /* -- Table -- */
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%; border-collapse: collapse;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem; font-weight: 400;
+    }
+    thead th {
+      text-align: left; padding: 0.5rem 0.75rem;
+      font-size: 0.65rem; font-weight: 500;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--dim); border-bottom: 1px solid var(--border);
+    }
+    thead th.r { text-align: right; }
+    td {
+      padding: 0.45rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    td.r { text-align: right; font-variant-numeric: tabular-nums; }
+    tr:last-child td { border-bottom: none; }
+
+    /* -- Stat row -- */
+    .stat {
+      display: flex; align-items: baseline; gap: 0.5rem;
+      border-left: 2px solid var(--accent);
+      padding: 0.35rem 0 0.35rem 0.75rem;
+    }
+    .stat .num {
+      font-family: 'DM Mono', monospace;
+      font-size: 1.5rem; font-weight: 500;
+    }
+    .stat .lbl { font-size: 0.8rem; color: var(--dim); }
+
+    /* -- Badge -- */
+    .badge {
+      display: inline-block;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem; font-weight: 500;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 0.15rem 0.5rem; border-radius: 999px;
+    }
+    .badge--live { background: #e8f5e9; color: #2e7d32; }
+    .badge--new { background: #e3f2fd; color: var(--accent); }
+    .badge--rec { background: #1a1a1a; color: white; }
+
+    /* -- List -- */
+    .item-list { list-style: none; }
+    .item-list li {
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+      display: flex; align-items: flex-start; gap: 0.75rem;
+    }
+    .item-list li:last-child { border-bottom: none; }
+    .item-list .dot-status {
+      width: 6px; height: 6px; border-radius: 50%;
+      margin-top: 8px; flex-shrink: 0;
+    }
+    .dot-green { background: #2e7d32; }
+    .dot-blue { background: var(--accent); }
+    .dot-dim { background: var(--dim); }
+
+    /* -- Checklist -- */
+    .check-list { list-style: none; }
+    .check-list li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+      display: flex; align-items: flex-start; gap: 0.6rem;
+    }
+    .check-list li:last-child { border-bottom: none; }
+    .check-list li::before {
+      content: '';
+      width: 14px; height: 14px; border-radius: 3px;
+      border: 1.5px solid var(--border); flex-shrink: 0;
+      margin-top: 3px;
+    }
+
+    /* -- Divider -- */
+    hr { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
+
+    /* -- Grid -- */
+    .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+    @media (max-width: 560px) {
+      .g2, .g3 { grid-template-columns: 1fr; }
+      .nav-dots { display: none; }
+    }
+
+    /* -- Spacers -- */
+    .mt { margin-top: 1.5rem; }
+    .mt-s { margin-top: 0.75rem; }
+    .mb { margin-bottom: 1.5rem; }
+
+    /* footer */
+    footer {
+      text-align: center; padding: 3rem 2rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem; color: var(--dim);
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="nav-dots" id="dots"></div>
+
+<!-- ===== 1. TITLE ===== -->
+<section class="slide" id="s1">
+  <div class="slide-inner" style="text-align:center;">
+    <p class="label mb">April 7, 2026</p>
+    <h1>Growth Standup</h1>
+    <p class="dim mt-s" style="font-size:0.95rem;">SPKA + SPKC</p>
+  </div>
+</section>
+
+<!-- ===== 2. AGENDA ===== -->
+<section class="slide" id="s2">
+  <div class="slide-inner">
+    <h2>Agenda</h2>
+    <div class="card">
+      <ol style="padding-left:1.25rem; font-size:0.9rem; line-height:2.2; color:var(--dim);">
+        <li><strong style="color:var(--fg)">RAA Spend</strong> &mdash; 10-day review</li>
+        <li><strong style="color:var(--fg)">Cross-Promos</strong> &mdash; live + upcoming</li>
+        <li><strong style="color:var(--fg)">Cross-Platform</strong> &mdash; landing pages, paid, SEO/AEO</li>
+        <li><strong style="color:var(--fg)">Content Pipeline</strong> &mdash; demos &amp; organic</li>
+        <li><strong style="color:var(--fg)">Action Items</strong> &mdash; this week</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 3. RAA SPEND ===== -->
+<section class="slide" id="s3">
+  <div class="slide-inner">
+    <h2>RAA &mdash; 10 Day Spend</h2>
+    <p class="dim" style="font-size:0.88rem; margin-bottom:1.25rem;">Ads back live after x-link fix. Scaling to $500&ndash;700/day.</p>
+
+    <div class="g3 mb">
+      <div class="stat"><span class="num">4,800</span><span class="lbl">total entries</span></div>
+      <div class="stat"><span class="num">44%</span><span class="lbl">L1 activation (7d)</span></div>
+      <div class="stat"><span class="num">$231</span><span class="lbl">avg/day</span></div>
+    </div>
+
+    <div class="card table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th class="r">Spend</th>
+            <th class="r">Views</th>
+            <th class="r">Installs</th>
+            <th class="r">Entries</th>
+          </tr>
+        </thead>
+        <tbody id="raa-table"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 4. CROSS-PROMOS ===== -->
+<section class="slide" id="s4">
+  <div class="slide-inner">
+    <h2>Cross-Promos</h2>
+    <p class="dim" style="font-size:0.88rem; margin-bottom:1.25rem;">Ben to pick one partner to activate this week.</p>
+
+    <p class="label">Live</p>
+    <div class="card mt-s">
+      <ul class="item-list">
+        <li><span class="dot-status dot-green"></span><strong>EarnM</strong> <span class="dim">&mdash; need status update</span></li>
+        <li><span class="dot-status dot-green"></span><strong>UniJump</strong> <span class="dim">&mdash; SPKA quest collab, need projected numbers</span></li>
+      </ul>
+    </div>
+
+    <p class="label mt">Upcoming</p>
+    <div class="card mt-s table-wrap">
+      <table>
+        <thead>
+          <tr><th>Partner</th><th class="r">$/User</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>@FrogCaseBot <span class="badge badge--rec">Pick</span></td><td class="r">&mdash;</td><td class="dim">Gorilla Case team. Prior relationship.</td></tr>
+          <tr><td>@patrickstarsrobot</td><td class="r">$0.04&ndash;0.07</td><td class="dim">Stats + gambling mechanics</td></tr>
+          <tr><td>@StarsovEarnBot</td><td class="r">&mdash;</td><td class="dim">Highest volume, lower activity</td></tr>
+          <tr><td>@heypaymoneybot</td><td class="r">&mdash;</td><td class="dim">Non-TG traffic, interesting geos</td></tr>
+          <tr><td>@Freegifts + @StarsForTasksBot</td><td class="r">$0.03&ndash;0.05</td><td class="dim">Bundle</td></tr>
+          <tr><td>@MyChimpBot</td><td class="r">$0.06&ndash;0.08</td><td class="dim">&mdash;</td></tr>
+          <tr><td>@mellgifts_bot</td><td class="r">$0.10</td><td class="dim">&mdash;</td></tr>
+          <tr><td>@Traffy_robot</td><td class="r">$0.02&ndash;0.09</td><td class="dim">Mix $0.02 / CIS $0.03 / Premium $0.09</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="dim mt-s" style="font-size:0.78rem;">No game night this week. Checking Mix Mob for next week.</p>
+  </div>
+</section>
+
+<!-- ===== 5. CROSS-PLATFORM ===== -->
+<section class="slide" id="s5">
+  <div class="slide-inner">
+    <h2>Cross-Platform Growth</h2>
+    <p class="dim" style="font-size:0.88rem; margin-bottom:1.25rem;">TG monthly users who aren't daily won't see in-app ads. Meet them where they are.</p>
+
+    <div class="g2">
+      <div class="card">
+        <p class="label">Paid Social</p>
+        <p class="mt-s" style="font-size:0.88rem;"><strong>Meta Ads</strong> &mdash; train pixel, retarget</p>
+        <p class="dim" style="font-size:0.78rem;">Blocked by: landing page attribution</p>
+      </div>
+      <div class="card">
+        <p class="label">Paid Search</p>
+        <p class="mt-s" style="font-size:0.88rem;"><strong>Google Ads</strong> &mdash; "Telegram games" broad match</p>
+        <p class="dim" style="font-size:0.78rem;">Thousands of monthly searches</p>
+      </div>
+      <div class="card">
+        <p class="label">SEO / AEO</p>
+        <p class="mt-s" style="font-size:0.88rem;"><strong>Programmatic SEO</strong> + answer engine optimization</p>
+        <p class="dim" style="font-size:0.78rem;">Agent-friendly pages. Dominate TG game queries.</p>
+      </div>
+      <div class="card">
+        <p class="label">Organic</p>
+        <p class="mt-s" style="font-size:0.88rem;"><strong>Demo recordings</strong> &rarr; reaction content &rarr; hooks</p>
+        <p class="dim" style="font-size:0.78rem;">Best organic becomes paid creative</p>
+      </div>
+    </div>
+
+    <hr />
+    <p style="font-size:0.88rem;"><strong>Unlock:</strong> landing page with attribution. Everything else follows.</p>
+  </div>
+</section>
+
+<!-- ===== 6. LANDING PAGE CHECKLIST ===== -->
+<section class="slide" id="s6">
+  <div class="slide-inner">
+    <h2>Landing Page Requirements</h2>
+
+    <div class="card">
+      <ul class="check-list">
+        <li><strong>Event tracking</strong> <span class="dim">&mdash; CTA clicks fire back to Meta, Google, TikTok SDKs</span></li>
+        <li><strong>AI / crawler indexing</strong> <span class="dim">&mdash; structured data, semantic HTML, schema markup for AEO</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 7. CONTENT PIPELINE ===== -->
+<section class="slide" id="s7">
+  <div class="slide-inner">
+    <h2>Content Pipeline</h2>
+
+    <div class="card">
+      <ul class="item-list">
+        <li><span class="dot-status dot-blue"></span><strong>Record</strong> <span class="dim">&mdash; Ben + Randy capture raw gameplay (train, office, outside)</span></li>
+        <li><span class="dot-status dot-blue"></span><strong>React</strong> <span class="dim">&mdash; match with reaction content, mine hooks from growth engineers</span></li>
+        <li><span class="dot-status dot-blue"></span><strong>Distribute</strong> <span class="dim">&mdash; TikTok Spark, Meta Reels, YouTube Shorts</span></li>
+        <li><span class="dot-status dot-blue"></span><strong>Amplify</strong> <span class="dim">&mdash; best organic becomes paid creative via landing page</span></li>
+      </ul>
+    </div>
+
+    <p class="dim mt" style="font-size:0.82rem;">Start recording before Randy leaves. Even raw clips are material.</p>
+  </div>
+</section>
+
+<!-- ===== 8. ACTION ITEMS ===== -->
+<section class="slide" id="s8">
+  <div class="slide-inner">
+    <h2>Action Items</h2>
+
+    <div class="card">
+      <p class="label">This Week</p>
+      <ul class="check-list mt-s">
+        <li><strong>Ben:</strong> Pick one cross-promo to activate (Frog Case rec'd)</li>
+        <li><strong>Ben:</strong> Set up partner link, attribution &amp; tasks</li>
+        <li><strong>Ben + Randy:</strong> EarnM status &amp; UniJump projections</li>
+        <li><strong>Ben + Randy:</strong> Record gameplay demos before Randy leaves</li>
+        <li><strong>Bryan:</strong> Check Mix Mob re: game night next week</li>
+        <li><strong>Bryan:</strong> Finalize landing page requirements</li>
+        <li><strong>Team:</strong> Monitor RAA as scaling goes up to $500/day</li>
+      </ul>
+    </div>
+
+    <div class="card mt">
+      <p class="label">Next Up</p>
+      <ul class="check-list mt-s">
+        <li>Landing page build (event tracking + AI/crawler indexing)</li>
+        <li>Choose demo formats &amp; platforms for organic</li>
+        <li>Evaluate growth/marketing role</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>Spekter Games &middot; April 7, 2026</footer>
+
+<script>
+  // RAA data with real install numbers (uniques of entry)
+  const data = [
+    ['Apr 07', 413,  496000, 3850, 551, true],
+    ['Apr 06', 612,  735000, 5710, 816, true],
+    ['Apr 05', 590,  708000, 5500, 787, true],
+    ['Apr 04', 496,  595000, 4630, 661, true],
+    ['Apr 01', 428.63, 287797, 2964, 259],
+    ['Mar 31', 120.67, 167323, 1238, 102],
+    ['Mar 30',  17.01,   9266, 1430,  36],
+    ['Mar 29',  24.10,  12298,  709, 148],
+    ['Mar 28',  35.75,  24499,  792, 132],
+    ['Mar 27',  79.81,  44881, 1390, 246],
+    ['Mar 26',  60.57,  43049, 1405,  92],
+    ['Mar 25', 144.82, 124200, 1445, 197],
+    ['Mar 24', 197.06, 145072, 1620, 200],
+    ['Mar 23', 214.15, 164722, 1798, 246],
+    ['Mar 22', 267.59, 230152, 2427, 327],
+  ];
+
+  const fmt = n => n.toLocaleString();
+  const tbody = document.getElementById('raa-table');
+  data.forEach(([date, usd, views, clicks, installs]) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${date}</td>
+      <td class="r">$${Math.round(usd).toLocaleString()}</td>
+      <td class="r">${fmt(views)}</td>
+      <td class="r">${fmt(clicks)}</td>
+      <td class="r">${fmt(installs)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Nav dots + progress
+  const slides = document.querySelectorAll('.slide');
+  const dotsEl = document.getElementById('dots');
+  const bar = document.getElementById('progress');
+
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    d.addEventListener('click', () => slides[i].scrollIntoView({ behavior: 'smooth' }));
+    dotsEl.appendChild(d);
+  });
+  const dots = dotsEl.querySelectorAll('.dot');
+
+  function update() {
+    const scrollY = window.scrollY;
+    const docH = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (docH > 0 ? (scrollY / docH) * 100 : 0) + '%';
+
+    let current = 0;
+    slides.forEach((s, i) => {
+      if (s.getBoundingClientRect().top < window.innerHeight * 0.5) current = i;
+    });
+    dots.forEach((d, i) => d.classList.toggle('active', i === current));
+  }
+
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+</script>
+</body>
+</html>
